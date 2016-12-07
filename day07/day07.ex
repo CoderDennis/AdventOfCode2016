@@ -18,6 +18,7 @@ defmodule Day07 do
   iex> Day07.supports_tls?("ioxxoj[asdfgh]zxcvbn")
   true
 
+  # make sure abba split by [...] doesn't give false positive. ojjo in this case.
   iex> Day07.supports_tls?("ixoj[asdfgh]jocvbn")
   false
   """
