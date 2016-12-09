@@ -1,20 +1,39 @@
 defmodule Day08 do
 
   def puzzle_answer() do
-    {:ok, screen_pid} = Day08.Screen.start_link({50,6})
+    size = {50,6}
+    {:ok, screen_pid} = Day08.Screen.start_link(size)
     File.stream!("input.txt")
     |> Stream.map(&parse_instruction/1)
     |> Enum.each(&(GenServer.call(screen_pid, &1)))
     GenServer.call(screen_pid, :get_pixels)
-    |> Enum.count
+    |> display_pixels(size)
   end
 
   def sample_screen() do
-    {:ok, screen_pid} = Day08.Screen.start_link({7,3})
+    size = {7,3}
+    {:ok, screen_pid} = Day08.Screen.start_link(size)
     File.stream!("sample.txt")
     |> Stream.map(&parse_instruction/1)
     |> Enum.each(&(GenServer.call(screen_pid, &1)))
     GenServer.call(screen_pid, :get_pixels)
+    |> display_pixels(size)
+  end
+
+  def display_pixels(pixels, {width, height}) do
+    (for y <- 0..height-1,
+         x <- 0..width-1,
+         do: {x, y})
+    |> Enum.each(fn {x, y} ->
+        if 0 == x do
+          IO.puts("")
+        end
+        if MapSet.member?(pixels, {x, y}) do
+          IO.write("#")
+        else
+          IO.write(".")
+        end
+      end)
   end
 
   @doc ~s"""
