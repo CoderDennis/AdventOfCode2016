@@ -36,7 +36,7 @@ defmodule Day10 do
     :ok
   end
   defp ensure_created("output", number) do
-    if Process.whereis(Output.output_name(number) == nil) do
+    if Process.whereis(Output.output_name(number)) == nil do
       Output.start_link(number)
     end
     :ok
@@ -93,6 +93,6 @@ defmodule Output do
 
   def handle_cast({:value, v}, %Output{number: number, values: values} = state) do
     IO.puts("output #{number} got value #{v}")
-    {:noreply, %{state | vlaues: [v | values]}}
+    {:noreply, %{state | values: [v | values]}}
   end
 end
