@@ -56,9 +56,6 @@ defmodule Bot do
 
   def bot_name(number), do: "bot_#{number}" |> String.to_atom
 
-  def handle_cast({:value, v}, %Bot{values: []} = state) do
-    {:noreply, %{state | values: [v]}}
-  end
   def handle_cast({:value, v}, state) do
     values = [v | state.values]
     {:noreply, give_values(%{state | values: values})}
