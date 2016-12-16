@@ -4,7 +4,7 @@ defmodule Day16 do
   @input "01110110101001000"
 
   def puzzle() do
-    fill_and_checksum(@input, 272)
+    fill_and_checksum(@input, 35651584)
   end
 
   @doc """
