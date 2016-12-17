@@ -32,7 +32,7 @@ defmodule AnswerCollector do
   use GenServer
 
   def start_link() do
-    GenServer.start_link(__MODULE__, {-1, ""}, name: :answer)
+    GenServer.start_link(__MODULE__, {0, ""}, name: :answer)
   end
 
   def save_answer(passcode) do
@@ -43,21 +43,21 @@ defmodule AnswerCollector do
     GenServer.call(:answer, :reset)
   end
 
-  def handle_cast({length, passcode}, {-1, _}) do
+  def handle_cast({length, passcode}, {0, _}) do
     {:noreply, {length, passcode}}
   end
-  def handle_cast({length, passcode}, {shortest, _}) when length < shortest do
+  def handle_cast({length, passcode}, {longest, _}) when length > longest do
     {:noreply, {length, passcode}}
   end
   def handle_cast(_, state) do
     {:noreply, state}
   end
 
-  def handle_call(:get, _from, {_, passcode} = state) do
-    {:reply, passcode, state}
+  def handle_call(:get, _from, {length, _} = state) do
+    {:reply, length - 8, state}
   end
   def handle_call(:reset, _from, _) do
-    {:reply, :ok, {-1, ""}}
+    {:reply, :ok, {0, ""}}
   end
 
 end
