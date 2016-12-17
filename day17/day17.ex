@@ -3,7 +3,7 @@ defmodule Day17 do
   def run(passcode) do
     AnswerCollector.start_link()
     AnswerCollector.reset()
-    Pathfinder.start_link({0,0}, passcode)
+    Pathfinder.start({0,0}, passcode)
   end
 
   def get_answer() do
@@ -73,8 +73,8 @@ defmodule Pathfinder do
   is closed and locked.
   """
 
-  def start_link(position, passcode) do
-    {:ok, pid} = GenServer.start_link(__MODULE__,
+  def start(position, passcode) do
+    {:ok, pid} = GenServer.start(__MODULE__,
       {position, passcode})
     GenServer.cast(pid, :go)
     {:ok, pid}
@@ -83,7 +83,7 @@ defmodule Pathfinder do
   def handle_cast(:go, {{3,3}, passcode} = state) do
     #IO.puts "#{String.length passcode}:#{passcode}"
     AnswerCollector.save_answer(passcode)
-    {:noreply, state, :hibernate}
+    {:stop, :normal, state}
   end
   def handle_cast(:go, {position, passcode} = state) do
     passcode
@@ -93,7 +93,7 @@ defmodule Pathfinder do
     |> Enum.with_index()
     |> Enum.filter(fn {code, _} -> door_open?(code) end)
     |> Enum.each(fn {_, door} -> move(door, position, passcode) end)
-    {:noreply, state}
+    {:stop, :normal, state}
   end
 
   @open_chars "bcdef" |> String.codepoints
@@ -103,15 +103,15 @@ defmodule Pathfinder do
 
   # Up
   defp move(0, {_x, 0}, _passcode), do: :ok
-  defp move(0, {x, y}, passcode), do: Pathfinder.start_link({x, y-1}, passcode <> "U")
+  defp move(0, {x, y}, passcode), do: Pathfinder.start({x, y-1}, passcode <> "U")
   # Down
   defp move(1, {_x, 3}, _passcode), do: :ok
-  defp move(1, {x, y}, passcode), do: Pathfinder.start_link({x, y+1}, passcode <> "D")
+  defp move(1, {x, y}, passcode), do: Pathfinder.start({x, y+1}, passcode <> "D")
   # Left
   defp move(2, {0, _y}, _passcode), do: :ok
-  defp move(2, {x, y}, passcode), do: Pathfinder.start_link({x-1, y}, passcode <> "L")
+  defp move(2, {x, y}, passcode), do: Pathfinder.start({x-1, y}, passcode <> "L")
   # Right
   defp move(3, {3, _y}, _passcode), do: :ok
-  defp move(3, {x, y}, passcode), do: Pathfinder.start_link({x+1, y}, passcode <> "R")
+  defp move(3, {x, y}, passcode), do: Pathfinder.start({x+1, y}, passcode <> "R")
 
 end
