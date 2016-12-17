@@ -1,16 +1,16 @@
 defmodule Day14 do
 
-  # def puzzle_answer() do
-  #   get_keys("ahsbgdzn")
-  # end
+  def puzzle_answer() do
+    get_keys("ahsbgdzn")
+  end
 
-  # @doc """
-  # iex> Day14.get_keys("abc")
-  # {
-  # """
-  # def get_keys(salt) do
+  @doc """
+  iex> Day14.get_keys("abc")
+  []
+  """
+  def get_keys(salt) do
     
-  # end
+  end
 
 
   @doc """
@@ -21,6 +21,17 @@ defmodule Day14 do
     :crypto.hash(:md5, "#{salt}#{index}")
     |> Base.encode16
     |> String.downcase
+  end
+
+  @doc """
+  iex> Day14.find_triplet("cc38887a5")
+  {:ok, "8"}
+
+  iex> Day14.find_triplet("abcdef123456")
+  :none
+  """
+  def find_triplet(hash) do
+    
   end
 
 end
