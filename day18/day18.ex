@@ -2,7 +2,7 @@ defmodule Day18 do
 
   def puzzle_answer() do
     ".^^^.^.^^^^^..^^^..^..^..^^..^.^.^.^^.^^....^.^...^.^^.^^.^^..^^..^.^..^^^.^^...^...^^....^^.^^^^^^^"
-    |> count_safe_tiles_in_rows(40)
+    |> count_safe_tiles_in_rows(400000)
   end
 
   @doc """
@@ -13,7 +13,7 @@ defmodule Day18 do
     input
     |> String.codepoints
     |> Stream.iterate(&next_row/1)
-    |> Enum.take(rows)
+    |> Stream.take(rows)
     |> Enum.reduce(0, &count_safe_tiles/2)
   end
 
