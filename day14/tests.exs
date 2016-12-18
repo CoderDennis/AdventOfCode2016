@@ -1,4 +1,4 @@
-ExUnit.start
+ExUnit.start(timeout: 1000000)
 
 defmodule Tests do
   use ExUnit.Case, async: true
