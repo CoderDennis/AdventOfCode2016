@@ -1,58 +1,37 @@
 defmodule Day19 do
+  require Integer
 
+  @doc """
+  iex> Day19.run(5)
+  3
+
+  iex> Day19.run(10)
+  5
+
+  iex> Day19.run(11)
+  7
+  """
   def run(elf_count) do
     1..elf_count
-    |> Enum.each(fn n -> Elf.start(n, elf_count) end)
-    GenServer.cast(:elf1, :go)
+    |> Enum.into([])
+    |> drop_from_list(false)
   end
 
-end
-
-defmodule Elf do
-  use GenServer
-  defstruct [:number, :count, :presents]
-
-  def start(number, count) do
-    GenServer.start(__MODULE__,
-      %Elf{number: number, count: count, presents: 1},
-      name: elf_name(number))
+  def drop_from_list([elf], _drop_first), do: elf
+  def drop_from_list(elves, false) do
+    [0 | elves]
+    # |> IO.inspect
+    |> Enum.drop_every(2)
+    |> drop_from_list(even_length?(elves))
+  end
+  def drop_from_list(elves, true) do
+    elves
+    # |> IO.inspect
+    |> Enum.drop_every(2)
+    |> drop_from_list(even_length?(elves))
   end
 
-  defp elf_name(number) do
-    "elf#{number}" |> String.to_atom
-  end
-
-  def handle_cast(:go, %Elf{number: n, count: p, presents: p} = state) do
-    IO.inspect n
-    {:noreply, state}
-  end
-  def handle_cast(:go, %Elf{number: n, count: n, presents: 0} = state) do
-    GenServer.cast(:elf1, :go)
-    {:noreply, state}
-  end
-  def handle_cast(:go, %Elf{number: n, presents: 0} = state) do
-    GenServer.cast(elf_name(n+1), :go)
-    {:noreply, state}
-  end
-  def handle_cast(:go, %Elf{number: n, count: n, presents: p} = state) do
-    taken_presents = GenServer.call(:elf1, :take)
-    GenServer.cast(:elf1, :go)
-    {:noreply, %{state | presents: p + taken_presents}}
-  end
-  def handle_cast(:go, %Elf{number: n, presents: p} = state) do
-    taken_presents = GenServer.call(elf_name(n + 1), :take)
-    GenServer.cast(elf_name(n + 1), :go)
-    {:noreply, %{state | presents: p + taken_presents}}
-  end
-
-  def handle_call(:take, _from, %Elf{number: n, count: n, presents: 0} = state) do
-    {:reply, GenServer.call(:elf1, :take), state}
-  end
-  def handle_call(:take, _from, %Elf{number: n, presents: 0} = state) do
-    {:reply, GenServer.call(elf_name(n + 1), :take), state}
-  end
-  def handle_call(:take, _from, %Elf{presents: p} = state) do
-    {:reply, p, %{state | presents: 0}}
-  end
+  defp even_length?(list) when Integer.is_even(length(list)), do: true
+  defp even_length?(_), do: false
 
 end
