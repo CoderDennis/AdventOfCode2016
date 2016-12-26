@@ -20,7 +20,7 @@ defmodule Day20 do
   def skip_blocked(ip), do: ip + 1
 
   def first_unblocked(start \\ 0) do
-    Stream.iterate(start, &(&1+1))
+    Stream.iterate(start, &skip_blocked/1)
     |> Enum.find(&(not blocked?(&1)))
   end
 
