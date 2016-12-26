@@ -9,17 +9,9 @@ defmodule Day13 do
     draw_maze(40, 50, 31, 39, 1352)
   end
 
-  def navigate_sample() do
-    navigate({7, 4}, 10)
-  end
-
-  def navigate_puzzle() do
-    navigate({31, 39}, 1352)
-  end
-
-  def navigate(goal, favorite_number) do
+  def run_part2() do
     AnswerCollector.start_link
-    Pathfinder.start({1, 1}, goal, favorite_number, MapSet.new)
+    Pathfinder.start({1,1}, 0, 1352, MapSet.new([{1,1}]))
   end
 
   @doc ~s"""
@@ -74,20 +66,20 @@ end
 defmodule Pathfinder do
   use GenServer
 
-  def start(position, goal, number, path) do
-    {:ok, pid} = GenServer.start(__MODULE__, {position, goal, number, path})
+  def start(position, step_count, number, path) do
+    {:ok, pid} = GenServer.start(__MODULE__, {position, step_count, number, path})
     GenServer.cast(pid, :go)
     {:ok, pid}
   end
 
-  def handle_cast(:go, {goal, goal, _number, path} = state) do
-    AnswerCollector.save_answer(MapSet.size(path))
+  def handle_cast(:go, {_position, 50, _number, path} = state) do
+    AnswerCollector.save_answer(path)
     {:stop, :normal, state}
   end
-  def handle_cast(:go, {position, goal, number, path} = state) do
+  def handle_cast(:go, {position, step_count, number, path} = state) do
     position
     |> possible_steps(number, path)
-    |> Enum.each(&(Pathfinder.start(&1, goal, number, MapSet.put(path, &1))))
+    |> move(step_count, number, path)
     {:stop, :normal, state}
   end
 
@@ -107,17 +99,25 @@ defmodule Pathfinder do
     end
   end
 
+  def move([], _step_count, _number, path) do
+    AnswerCollector.save_answer(path)
+  end
+  def move(steps, step_count, number, path) do
+    steps
+    |> Enum.each(&(Pathfinder.start(&1, step_count + 1, number, MapSet.put(path, &1))))
+  end
+
 end
 
 defmodule AnswerCollector do
   use GenServer
 
   def start_link() do
-    GenServer.start_link(__MODULE__, 0, name: :answer)
+    GenServer.start_link(__MODULE__, MapSet.new, name: :answer)
   end
 
-  def save_answer(length) do
-    GenServer.cast(:answer, length)
+  def save_answer(path) do
+    GenServer.cast(:answer, path)
   end
 
   def get() do
@@ -128,21 +128,15 @@ defmodule AnswerCollector do
     GenServer.call(:answer, :reset)
   end
 
-  def handle_cast(length, 0) do
-    {:noreply, length}
-  end
-  def handle_cast(length, shortest) when length < shortest do
-    {:noreply, length}
-  end
-  def handle_cast(_, state) do
-    {:noreply, state}
+  def handle_cast(new_path, seen_path) do
+    {:noreply, MapSet.union(seen_path, new_path)}
   end
 
-  def handle_call(:get, _from, length) do
-    {:reply, length, length}
+  def handle_call(:get, _from, seen_path) do
+    {:reply, MapSet.size(seen_path), seen_path}
   end
   def handle_call(:reset, _from, _) do
-    {:reply, :ok, 0}
+    {:reply, :ok, MapSet.new}
   end
 
 end
