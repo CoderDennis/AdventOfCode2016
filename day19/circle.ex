@@ -75,7 +75,7 @@
       circle
     end
 
-    def skip(circle, node, 0), do: node
+    def skip(_circle, node, 0), do: node
     def skip(circle, node, left) do
       node = next(circle, node)
       skip(circle, node, left-1)

@@ -111,7 +111,7 @@ _ _
   def next_across(_circle, node, _, 2), do: node
 
   def next_across(circle, node, across, n) when rem(n, 2) == 1 do
-    IO.puts "ODD size #{n} at node #{node}"
+    # IO.puts "ODD size #{n} at node #{node}"
     next_casualty = Circle.next(circle, across)
     next_casualty = Circle.next(circle, next_casualty)
     Circle.delete(circle, across)
@@ -119,7 +119,7 @@ _ _
     next_across(circle, next, next_casualty, n-1)
   end
   def next_across(circle, node, across, n) when rem(n, 2) == 0 do
-    IO.puts "EVEN size #{n} at node #{node}"
+    # IO.puts "EVEN size #{n} at node #{node}"
     next_casualty = Circle.next(circle, across)
     Circle.delete(circle, across)
     next = Circle.next(circle, node)
