@@ -1,17 +1,21 @@
 defmodule Day21 do
 
   def run() do
-    scramble("abcdefgh")
+    scramble("abcdefgh", "input.txt")
   end
 
   @doc """
   iex> Day21.scramble("abcde", "example.txt")
   "decab"
   """
-  def scramble(password, instructions_file \\ "input.txt") do
-    File.stream!(instructions_file)
-    |> Enum.map(&String.trim/1)
+  def scramble(password, instructions) when is_list instructions do
+    instructions
     |> Enum.reduce(password, &perform/2)
+  end
+  def scramble(password, instructions_file) do
+    instructions = (File.stream!(instructions_file)
+    |> Enum.map(&String.trim/1))
+    scramble(password, instructions)
   end
 
   # def perform(instruction, password) ...
