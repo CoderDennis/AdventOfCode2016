@@ -1,17 +1,19 @@
 defmodule Day23 do
 
   def run_puzzle() do
+    setup_registers
+    GenServer.call(:c, {:set, 7})
     File.stream!("input.txt")
     |> run
   end
 
   def run_sample() do
+    setup_registers
     File.stream!("sample.txt")
     |> run
   end
 
   def run(instructions) do
-    setup_registers
     instructions
     |> Stream.map(&(&1 |> String.strip |> parse_instruction))
     |> Enum.to_list
@@ -30,47 +32,74 @@ defmodule Day23 do
   def run([next | instructions], processed, jump) when jump > 0 do
     run(instructions, [next | processed], jump - 1)
   end
-  def run([{:copy, from, to_register} = current | remaining], processed, _) do
-    # IO.inspect {:copy, current, remaining, processed}
+  def run([{false, {:copy, from, to_register}} = current | remaining], processed, _) when is_atom to_register do
     GenServer.call(to_register, {:set, get_value(from)})
-    # IO.inspect %{a: get_value(:a),
-    #              b: get_value(:b),
-    #              c: get_value(:c),
-    #              d: get_value(:d)}
     run(remaining, [current | processed], 0)
   end
-  def run([{:jump, check, move} = current | remaining] = instructions, processed, _) do
+  def run([{false, {:copy, _, _}} = current | remaining], processed, _) do
+    # skip invalid copy
+    run(remaining, [current | processed], 0)
+  end
+  def run([{false, {:jump, check, move}} = current | remaining] = instructions, processed, _) do
     if get_value(check) == 0 do
       run(remaining, [current | processed], 0)
     else
       run(instructions, processed, move)
     end
   end
-  def run([{action, register} = current | remaining], processed, _) do
-    # IO.inspect {action, current, remaining, processed}
-    GenServer.call(register, action)
-    # IO.inspect %{a: get_value(:a),
-    #              b: get_value(:b),
-    #              c: get_value(:c),
-    #              d: get_value(:d)}
-      run(remaining, [current | processed], 0)
+  def run([{false, {:toggle, x}} = current | remaining], processed, _) do
+    {current, remaining, processed} = (get_value(x)
+    |> toggle(current, remaining, processed))
+    run(remaining, [current | processed], 0)
   end
+  def run([{false, {action, register}} = current | remaining], processed, _) do
+    GenServer.call(register, action)
+    run(remaining, [current | processed], 0)
+  end
+  def run([{true, {:inc, a}} | remaining], processed, _) do
+    run([{false, {:dec, a}} | remaining], processed, 0)
+  end
+  def run([{true, {_, a}} | remaining], processed, _) do
+    run([{false, {:inc, a}} | remaining], processed, 0)
+  end
+  def run([{true, {:jump, a, b}} | remaining], processed, _) do
+    run([{false, :copy, a, b} | remaining], processed, 0)
+  end
+  def run([{true, {_, a, b}} | remaining], processed, _) do
+    run([{false, {:jump, a, b}} | remaining], processed, 0)
+  end
+
+  def toggle(0, {_, instruction}, remaining, processed) do
+    {{true, instruction}, remaining, processed}
+  end
+  def toggle(value, current, remaining, processed) when value > 0 do
+    {current, toggle(remaining, value), processed}
+  end
+  def toggle(value, current, remaining, processed) do
+    {current, remaining, toggle(processed, value)}
+  end
+
+  def toggle(list, count) when length(list) <= count do
+    {a, [{_, instruction} | remaining]} = Enum.split(list, count - 1)
+    a ++ [{true, instruction} | remaining]
+  end
+  def toggle(list, _), do: list
 
   def setup_registers() do
     [:a, :b, :c, :d]
     |> Enum.each(&Register.start_link/1)
-    GenServer.call(:c, {:set, 1})
   end
 
-  def parse_instruction("inc " <> register), do: {:inc, register |> String.to_atom}
-  def parse_instruction("dec " <> register), do: {:dec, register |> String.to_atom}
+  def parse_instruction("inc " <> register), do: {false, {:inc, register |> String.to_atom}}
+  def parse_instruction("dec " <> register), do: {false, {:dec, register |> String.to_atom}}
   def parse_instruction("cpy " <> instruction) do
-    [:copy | instruction |> parse_values]
-    |> List.to_tuple
+    {false, [:copy | instruction |> parse_values] |> List.to_tuple}
   end
   def parse_instruction("jnz " <> instruction) do
-    [:jump | instruction |> parse_values]
-    |> List.to_tuple
+    {false, [:jump | instruction |> parse_values] |> List.to_tuple}
+  end
+  def parse_instruction("tgl " <> instruction) do
+    {false, [:toggle | instruction |> parse_values] |> List.to_tuple}
   end
 
   def parse_values(values) do
